@@ -107,6 +107,19 @@ public class WebViewConnection: Connection, CallableBinder {
         }
     }
 
+    func callback(from value: Any?) -> Result<() -> Void, Error> {
+        guard
+            let callbackId = value as? String,
+            let webView = self.webView
+        else {
+            return .failure(DecodeError())
+        }
+        let callback = WebViewCallback(webView: webView, callbackId: callbackId)
+        return .success({
+            _ = try? callback.call(args: [])
+        })
+    }
+
     func callback<T: Encodable>(from value: Any?, taking argType: T.Type) -> Result<(T) -> Void, Error> {
         guard
             let callbackId = value as? String,
