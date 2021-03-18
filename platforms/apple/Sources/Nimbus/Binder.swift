@@ -22,6 +22,14 @@ public protocol Binder {
     /**
      Bind the specified function to this connection.
      */
+    func bind(
+        _ name: String,
+        to function: @escaping (@escaping () -> Void, @escaping () -> Void) throws -> Void
+    )
+
+    /**
+     Bind the specified function to this connection.
+     */
     func bind<R: Encodable>(
         _ name: String,
         to function: @escaping () throws -> R
@@ -57,6 +65,14 @@ public protocol Binder {
     func bind<CB0: Encodable>(
         _ name: String,
         to function: @escaping (@escaping (CB0) -> Void, @escaping () -> Void) throws -> Void
+    )
+
+    /**
+     Bind the specified function to this connection.
+     */
+    func bind<CB1: Encodable>(
+        _ name: String,
+        to function: @escaping (@escaping () -> Void, @escaping (CB1) -> Void) throws -> Void
     )
 
     /**
@@ -544,12 +560,42 @@ public extension Binder {
     /**
      Bind the specified function to this connection.
      */
+    func bind<CB0: Encodable>(
+        _ function: @escaping  (@escaping (CB0) -> Void, @escaping () -> Void) throws -> Void,
+        as name: String
+    ) {
+        bind(name, to: function)
+    }
+
+    /**
+     Bind the specified function to this connection.
+     */
+    func bind<CB1: Encodable>(
+        _ function: @escaping  (@escaping () -> Void, @escaping (CB1) -> Void) throws -> Void,
+        as name: String
+    ) {
+        bind(name, to: function)
+    }
+
+    /**
+     Bind the specified function to this connection.
+     */
     func bind(
-            _ function: @escaping (@escaping () -> Void) throws -> Void,
-            as name: String
-        ) {
-            bind(name, to: function)
-        }
+        _ function: @escaping (@escaping () -> Void) throws -> Void,
+        as name: String
+    ) {
+        bind(name, to: function)
+    }
+
+    /**
+     Bind the specified function to this connection.
+     */
+    func bind(
+        _ function: @escaping (@escaping () -> Void, @escaping () -> Void) throws -> Void,
+        as name: String
+    ) {
+        bind(name, to: function)
+    }
 
     /**
      Bind the specified function to this connection.
