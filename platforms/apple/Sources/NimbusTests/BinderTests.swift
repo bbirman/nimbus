@@ -102,6 +102,17 @@ class BinderTests: XCTestCase {
         XCTAssertEqual(result, .some(42))
     }
 
+    func testBindUnaryWithNullaryCallback() {
+        binder.bind(binder.target.unaryWithNullaryCallback, as: "")
+        let expecter = expectation(description: "callback")
+        let callback: BindTarget.NullaryCallback = {
+            expecter.fulfill()
+        }
+        _ = try? binder.callable([callback])
+        wait(for: [expecter], timeout: 5)
+        XCTAssert(binder.target.called)
+    }
+
     func testBindUnaryWithUnaryCallbackThrows() {
         binder.bind(binder.target.unaryWithUnaryCallbackThrows, as: "")
         let expecter = expectation(description: "callback")
@@ -210,6 +221,22 @@ class BinderTests: XCTestCase {
         }
         XCTAssertThrowsError(try binder.callable([42, callback]))
         wait(for: [expecter], timeout: 5)
+        XCTAssert(binder.target.called)
+    }
+
+    func testBindBinaryWithTwoNullaryCallbacks() {
+        binder.bind(binder.target.binaryWithTwoNullaryCallbacks, as: "")
+        let expecter0 = expectation(description: "cb0")
+        let expecter1 = expectation(description: "cb1")
+
+        let cb0: BindTarget.NullaryCallback = {
+            expecter0.fulfill()
+        }
+        let cb1: BindTarget.NullaryCallback = {
+            expecter1.fulfill()
+        }
+        _ = try? binder.callable([cb0, cb1])
+        wait(for: [expecter0, expecter1], timeout: 5)
         XCTAssert(binder.target.called)
     }
 
@@ -1115,6 +1142,7 @@ enum BindError: Error {
 class BindTarget {
     private(set) var called = false
 
+    typealias NullaryCallback = () -> Void
     typealias UnaryCallback = (Int) -> Void
     typealias UnaryEncodableCallback = (Encodable) -> Void
     typealias BinaryCallback = (Int, Int) -> Void
@@ -1155,6 +1183,11 @@ class BindTarget {
     func unaryWithReturnThrows(arg0: Int) throws -> Int {
         called = true
         throw BindError.boundMethodThrew
+    }
+
+    func unaryWithNullaryCallback(callback: @escaping NullaryCallback) {
+        called = true
+        callback()
     }
 
     func unaryWithUnaryCallback(callback: @escaping UnaryCallback) {
@@ -1218,6 +1251,12 @@ class BindTarget {
         called = true
         callback(arg0, 37)
         throw BindError.boundMethodThrew
+    }
+
+    func binaryWithTwoNullaryCallbacks(callback0: @escaping NullaryCallback, callback1: @escaping NullaryCallback) {
+        called = true
+        callback0()
+        callback1()
     }
 
     func binaryWithTwoUnaryCallback(callback0: @escaping UnaryCallback, callback1: @escaping UnaryCallback) {
@@ -1642,6 +1681,15 @@ class TestBinder: CallableBinder {
     func callback<T: Encodable, U: Encodable>(from value: Any?, taking argType: (T.Type, U.Type)) -> Result<(T, U) -> Void, Error> {
         switch value {
         case let fn as (T, U) -> Void:
+            return .success(fn)
+        default:
+            return .failure(DecodeError())
+        }
+    }
+
+    func callback(from value: Any?) -> Result<() -> Void, Error> {
+        switch value {
+        case let fn as () -> Void:
             return .success(fn)
         default:
             return .failure(DecodeError())

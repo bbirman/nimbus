@@ -561,7 +561,7 @@ public extension Binder {
      Bind the specified function to this connection.
      */
     func bind<CB0: Encodable>(
-        _ function: @escaping  (@escaping (CB0) -> Void, @escaping () -> Void) throws -> Void,
+        _ function: @escaping (@escaping (CB0) -> Void, @escaping () -> Void) throws -> Void,
         as name: String
     ) {
         bind(name, to: function)
@@ -571,7 +571,7 @@ public extension Binder {
      Bind the specified function to this connection.
      */
     func bind<CB1: Encodable>(
-        _ function: @escaping  (@escaping () -> Void, @escaping (CB1) -> Void) throws -> Void,
+        _ function: @escaping (@escaping () -> Void, @escaping (CB1) -> Void) throws -> Void,
         as name: String
     ) {
         bind(name, to: function)
