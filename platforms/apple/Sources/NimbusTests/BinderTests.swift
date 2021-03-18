@@ -240,6 +240,29 @@ class BinderTests: XCTestCase {
         XCTAssert(binder.target.called)
     }
 
+    func testBindBinaryWithUnaryCallbackNullaryCallback() {
+        // TODO:
+        binder.bind(binder.target.binaryWithUnaryCallbackNullaryCallback, as: "")
+        // Errors with:
+        //  (BindTarget.UnaryEncodableCallback, BindTarget.NullaryCallback)' (aka '((Encodable) -> (), () -> ())')
+        //  cannot conform to 'Decodable'; only struct/enum/class types can conform to protocols
+
+        let expecter0 = expectation(description: "cb0")
+        let expecter1 = expectation(description: "cb1")
+        var result: Encodable?
+        let cb0: BindTarget.UnaryEncodableCallback = { value in
+            result = value
+            expecter0.fulfill()
+        }
+        let cb1: BindTarget.NullaryCallback = {
+            expecter1.fulfill()
+        }
+        _ = try? binder.callable([cb0, cb1])
+        wait(for: [expecter0, expecter1], timeout: 5)
+        XCTAssert(binder.target.called)
+        XCTAssertEqual(result as? String, "encodable string")
+    }
+
     func testBindBinaryWithTwoUnaryCallback() {
         binder.bind(binder.target.binaryWithTwoUnaryCallback, as: "")
         let expecter0 = expectation(description: "cb0")
@@ -1256,6 +1279,12 @@ class BindTarget {
     func binaryWithTwoNullaryCallbacks(callback0: @escaping NullaryCallback, callback1: @escaping NullaryCallback) {
         called = true
         callback0()
+        callback1()
+    }
+
+    func binaryWithUnaryCallbackNullaryCallback(callback0: @escaping UnaryEncodableCallback, callback1: @escaping NullaryCallback) {
+        called = true
+        callback0("encodable string")
         callback1()
     }
 
